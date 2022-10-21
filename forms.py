@@ -16,3 +16,15 @@ class AddLoginForm(FlaskForm):
 
     username = StringField("Username", validators=[InputRequired()])
     password = PasswordField("Password", validators=[InputRequired()])
+
+class AddFeedbackForm(FlaskForm):
+    """Feedback add form"""
+
+    title = StringField("Title", validators=[InputRequired()])
+    content = StringField("Content", validators=[InputRequired()])
+
+class UpdateFeedbackForm(FlaskForm):
+    """Feedback add form"""
+
+    title = StringField("Title", validators=[InputRequired()])
+    content = StringField("Content", validators=[InputRequired()])

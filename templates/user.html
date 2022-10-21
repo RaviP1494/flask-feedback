@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %} {{user.username}} {% endblock %}
+
+{% block content %}
+<h1>Welcome to your page, {{user.username}}!</h1>
+<div>First Name: {{user.first_name}}</div>
+<div>Last Name: {{user.last_name}}</div>
+<div>Email: {{user.email}}</div>
+
+<form action="/logout"><button>Log Out</button></a></form>
+<form action="/users/{{user.username}}/delete"><button>Delete User</button></a></form>
+
+<h3>Your feedback(click to update)</h3>
+<ul>
+    {% for fb in fbs %}
+    <li>
+        <a href="/feedback/{{fb.id}}/update">{{fb.title}}</a>: {{fb.content}} 
+        <form action="/feedback/{{fb.id}}/delete" method="POST">
+            <button>x</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+<form action="/users/{{user.username}}/feedback/add"><button>Add Feedback</button></form>
+{% endblock %}

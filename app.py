@@ -1,8 +1,8 @@
 """Flask app for Feedback"""
 
 from flask import Flask, render_template, redirect, session
-from models import db, connect_db, User
-from forms import AddRegistrationForm, AddLoginForm
+from models import db, connect_db, User, Feedback
+from forms import AddRegistrationForm, AddLoginForm, AddFeedbackForm, UpdateFeedbackForm
 # from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
@@ -23,6 +23,9 @@ def root():
 
 @app.route('/register', methods=["GET", "POST"])
 def register_view():
+    # if "username" in session:
+    #     return redirect(f"/users/{session['username']}")
+    
     form = AddRegistrationForm()
 
     if form.validate_on_submit():
@@ -31,7 +34,7 @@ def register_view():
         u = User.register(username = form.username.data, password = form.password.data, email = form.email.data, first_name = form.first_name.data, last_name = form.last_name.data)
         session["username"] = u.username
 
-        return redirect("/secret")
+        return redirect(f"/users/{u.username}")
 
     else:
         return render_template('register.html', form=form)
@@ -42,16 +45,80 @@ def login_view():
 
     if form.validate_on_submit():
 
-        u = User.query.one_or_none(form.username.data)
+        u = User.query.get(form.username.data)
         if u:
             if User.login(form.username.data, form.password.data):
                 session["username"] = u.username
+                return redirect(f"/users/{u.username}")
+            else:
+                return render_template('login.html', form=AddLoginForm())
+        else:
+            return render_template('login.html', form=form)
     else:
         return render_template('login.html', form=form)
 
-@app.route('/secret')
-def secret_view():
+@app.route('/users/<username>')
+def user_view(username):
     if session["username"]:
-        return "You are logged in'!"
+        u = User.query.get(username)
+        feedbacks = u.feedback
+        return render_template('user.html', user=u, fbs = feedbacks)
     else:
         return redirect('/login')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
+
+@app.route('/users/<username>/delete')
+def delete_user(username):
+    u = User.query.get(username)
+    if session["username"] == u.username:
+        db.session.delete(u)
+        db.session.commit()
+        session.clear()
+        return redirect('/')
+    else:
+        session.clear()
+        return redirect('/register')
+
+@app.route('/users/<username>/feedback/add', methods=["GET", "POST"])
+def add_feedback(username):
+    form = AddFeedbackForm()
+
+    if form.validate_on_submit():
+        feedback = Feedback(
+            title=form.title.data,
+            content=form.content.data,
+            username=username
+        )
+        db.session.add(feedback)
+        db.session.commit()
+        return redirect(f'/users/{username}')
+    else:
+        return render_template('addfb.html', form=form)
+
+@app.route('/feedback/<int:fb_id>/update', methods=["GET","POST"])
+def update_feedback(fb_id):
+    feedback = Feedback.query.get(fb_id)
+
+    form = UpdateFeedbackForm()
+
+    if form.validate_on_submit():
+        feedback.title = form.title.data
+        feedback.content = form.content.data
+        db.session.commit()
+
+        return redirect(f'/users/{username}')
+    else:
+        return render_template('editfb.html', form=form)
+
+@app.route('/feedback/<int:fb_id>/delete', methods=["POST"])
+def delete_feedback(fb_id):
+    feedback = Feedback.query.get(fb_id)
+
+    db.session.delete(feedback)
+    db.session.commit()
+
+    return redirect(f'/users/{feedback.username}')

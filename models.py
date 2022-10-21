@@ -13,7 +13,7 @@ def connect_db(app):
     db.init_app(app)
 
 class User(db.Model):
-    """User"""
+    """User SQLA Model"""
 
     __tablename__ = "users"
 
@@ -22,6 +22,8 @@ class User(db.Model):
     email = db.Column(db.String(50), nullable=False, unique=True)
     first_name = db.Column(db.String(30))
     last_name = db.Column(db.String(30))
+
+    feedback = db.relationship("Feedback", backref="user", cascade="all,delete")
 
     @classmethod
     def register(cls, username, password, email, first_name, last_name):
@@ -42,7 +44,7 @@ class User(db.Model):
         Return user if valid; else return False.
         """
 
-        user = User.query.one_or_none(username=username)
+        user = User.query.get(username)
 
         if user and bcrypt.check_password_hash(user.password, password):
             return user
@@ -50,3 +52,12 @@ class User(db.Model):
             return False
 
 
+class Feedback(db.Model):
+    """Feedback SQLA Model"""
+
+    __tablename__ = "feedback"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    username = db.Column(db.String(20), db.ForeignKey('users.username'), nullable=False)
