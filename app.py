@@ -69,7 +69,7 @@ def user_view(username):
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect('/login')
+    return redirect('/')
 
 @app.route('/users/<username>/delete')
 def delete_user(username):
@@ -102,23 +102,22 @@ def add_feedback(username):
 @app.route('/feedback/<int:fb_id>/update', methods=["GET","POST"])
 def update_feedback(fb_id):
     feedback = Feedback.query.get(fb_id)
+    if session["username"] == feedback.username:
+        form = UpdateFeedbackForm()
 
-    form = UpdateFeedbackForm()
-
-    if form.validate_on_submit():
-        feedback.title = form.title.data
-        feedback.content = form.content.data
-        db.session.commit()
-
-        return redirect(f'/users/{username}')
-    else:
-        return render_template('editfb.html', form=form)
+        if form.validate_on_submit():
+            feedback.title = form.title.data
+            feedback.content = form.content.data
+            db.session.commit()
+            return redirect(f'/users/{feedback.username}')
+        else:
+            return render_template('editfb.html', form=form)
 
 @app.route('/feedback/<int:fb_id>/delete', methods=["POST"])
 def delete_feedback(fb_id):
     feedback = Feedback.query.get(fb_id)
-
-    db.session.delete(feedback)
-    db.session.commit()
+    if session["username"] == feedback.username:
+        db.session.delete(feedback)
+        db.session.commit()
 
     return redirect(f'/users/{feedback.username}')
